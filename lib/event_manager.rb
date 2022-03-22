@@ -1,6 +1,8 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'time'
+require 'date'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -50,9 +52,10 @@ def save_thank_you_letter(id, form_letter)
 end
 
 def parse_date_time(date)
-  datetime = date.split(" ")
-  time = datetime[1]
-  time.split(":")[0]
+  time = DateTime.strptime(date, "%m/%d/%y %H:%M")
+  hour = time.hour
+  day_of_week = time.wday
+  return [hour, day_of_week]
 end
 
 puts 'Event Manager Initialized!'
@@ -98,14 +101,19 @@ def create_template_letters(contents)
   end
 end
 
-def top_hour(contents)
+def top_hour_day(contents)
   # call top_time to get best time
   all_times = []
+  all_days = []
   contents.each do |row|
-    time = parse_date_time(row[:regdate])
-    all_times.push(time)
+    day_time = parse_date_time(row[:regdate])
+    all_times.push(day_time[0])
+    all_days.push(day_time[1])
   end
   most_occurring_time = all_times.max_by { |i| all_times.count(i) }
+  most_occurring_day = all_days.max_by { |i| all_times.count(i) }
+  
+  "The most occuring time was #{most_occurring_time} and the most occuring day was #{most_occurring_day}."
 end
 
-p top_hour(contents)
+p top_hour_day(contents)
